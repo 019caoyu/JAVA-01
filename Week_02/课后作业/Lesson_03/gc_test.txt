@@ -1,0 +1,686 @@
+测试前提：
+	GCLogAnalysis 执行3s, 
+	Java 版本：Java 8
+	GC LOG 分析工具：GCeasy
+总结：
+    相关显示的解释：
+    Young Generation = eden + from < MaxNewSize = eden + from + to
+	ParallelGCThreads参数的估算，
+		如果CPU小于8，则ParallelGCThreads=N(CPU 核数), 
+		如果CPU大于8，每超过5/8个CPU启动一个新的线程，ParallelGCThreads=N*(5/8)+3 向下取整。
+		CMS线程数由-XX:ConcGCThreads=N, 其默认值为：
+			ConcGCThreads = (ParallelGCThreads + 3)/4 向下取整。
+Parallel GC 收集器：
+    默认值
+		MaxNewSize：MaxOldSize=1：2
+		eden：to：from=6：1：1
+CMS 收集器：
+    默认值
+		MaxNewSize   = 64M * ParallelGCThreads * 13 / 10
+		MaxOldSize   = Xmx - MaxNewSize
+		eden：to：from = 8：1：1
+
+实验一：通过设置固定GC收集器Parallel GC，比较在同一种GC收集器下，内存从大到小情况下GC收集器的性能表现
+
+memorySize  生成对象次数  TotalCreatedBytes  TotalReclaimedBytes  Throughput Full/MinorGCCount  AvgPauseGCTime/MaxPauseGCTime   GCTotalTime
+1g              36814       9.25 gb                 8.67 gb            48.781%       7/37              33.4 ms/90.0 ms          1470 ms
+2g 				45790       11.01 gb                10.52 gb           60.806%       2/22              43.8 ms/100.0 ms         1050 ms
+4g 				49874       12 gb	                10.49 gb	       70.26%	     0/12	           60.0 ms/70.0 ms          720 ms 
+6g 				49562       12 gb	                11.1 gb	           74.079%	     0/8	           71.0 ms/80.0 ms	        570 ms
+8g 				52297		12 gb	                11.58 gb	       77.26%	     0/6 	           73.0 ms/80.0 ms	        440 ms
+12g             48232		12 gb	                11.64 gb 	       81.166% 	     0/4	           77.5 ms/80.0 ms          310 ms
+
+1.使用Parallel GC 收集器：
+------------------------------------
+# memory size： 1g
+$ java -Dfile.encoding=UTF-8 -Xms1g -Xmx1g -Xloggc:gc.demo.log -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:36814
+
+Generation					Allocated 	Peak 
+Young Generation			298.5 mb	298.5 mb
+（eden + from）
+Old Generation				683 mb		651.72 mb
+Meta Space					1.01 gb		2.54 mb
+Young + Old + Meta space	2.01 gb		881.66 mb
+
+Throughput  : 48.781%
+
+Latency:
+    Avg Pause GC Time 	33.4 ms
+    Max Pause GC Time 	90.0 ms
+
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+10 - 20     	22	        50.0%
+20 - 30	        15	        34.09%
+80 - 90	        5	        11.36%
+90 - 100	    2	        4.55%
+
+Total GC stats
+	Total GC count 	        44
+	Total reclaimed bytes 	8.67 gb
+	Total GC time 	        1 sec 470 ms
+	Avg GC time 	        33.4 ms
+	GC avg time std dev	    22.0 ms
+	GC min/max time	        20.0 ms / 90.0 ms
+	GC Interval avg time 	66.0 ms
+
+Minor GC stats
+	Minor GC count	    37
+	Minor GC reclaimed 	6.59 gb
+	Minor GC total time	890 ms
+	Minor GC avg time 	24.1 ms
+	Minor GC avg time std dev	4.91 ms
+	Minor GC min/max time	20.0 ms / 30.0 ms
+	Minor GC Interval avg 	79.0 ms
+
+Full GC stats
+	Full GC Count	    7
+	Full GC reclaimed 	2.09 gb
+	Full GC total time	580 ms
+	Full GC avg time 	82.9 ms
+	Full GC avg time std dev	4.52 ms
+	Full GC min/max time	    80.0 ms / 90.0 ms
+	Full GC Interval avg 	    344 ms
+
+Object Stats
+	Total created bytes 	9.25 gb
+	Total promoted bytes 	2.33 gb
+	Avg creation rate 		3.22 gb/sec
+	Avg promotion rate 		832.15 mb/sec
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+# memory size： 2g
+$ java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g.log -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:45790
+
+Generation	                Allocated 	Peak 
+Young Generation	        597.5 mb	597.5 mb
+Old Generation	            1.33 gb	    1.27 gb
+Meta Space	                1.01 gb   	2.54 mb
+Young + Old + Meta space	3.01 gb	    1.75 gb
+
+Throughput  : 60.806%
+
+Latency:
+  Avg Pause GC Time 	43.8 ms
+  Max Pause GC Time 	100 ms
+  
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+20 - 30	          3	         12.5%
+30 - 40	          18	     75.0%
+50 - 60	          1	         4.17%
+80 - 90	          1	         4.17%
+90 - 100	      1	         4.17%
+  
+Total GC stats
+	Total GC count 	24
+	Total reclaimed bytes 	10.52 gb
+	Total GC time 	1 sec 50 ms
+	Avg GC time 	43.8 ms
+	GC avg time std dev	16.0 ms
+	GC min/max time	30.0 ms / 100 ms
+	GC Interval avg time 	116 ms
+	
+
+  Minor GC stats
+	Minor GC count	22
+	Minor GC reclaimed 	8.57 gb
+	Minor GC total time	860 ms
+	Minor GC avg time 	39.1 ms
+	Minor GC avg time std dev	4.17 ms
+	Minor GC min/max time	30.0 ms / 50.0 ms
+	Minor GC Interval avg 	127 ms
+
+
+  Full GC stats
+	Full GC Count	2
+	Full GC reclaimed 	1.95 gb
+	Full GC total time	190 ms
+	Full GC avg time 	95.0 ms
+	Full GC avg time std dev	5.00 ms
+	Full GC min/max time	90.0 ms / 100 ms
+	Full GC Interval avg 	1 sec 150 ms
+
+Object Stats
+	Total created bytes 	11.01 gb
+	Total promoted bytes 	2.19 gb
+	Avg creation rate 	    4.11 gb/sec
+	Avg promotion rate 	    836.93 mb/sec
+ 
+-------------------------------------------------------------------------------------------------------------------------------------
+
+# memory size: 4g
+$ java -Dfile.encoding=UTF-8 -Xms4g -Xmx4g -Xloggc:gc.demo_4g.log -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:49874
+
+
+通过GCeasy分析GC Log 结果如下：
+
+Generation	         Allocated 	Peak 
+Young Generation	 1.17 gb	1.17 gb
+Old Generation	     2.67 gb	1.22 gb
+Total	             4 gb	    2.39 gb
+
+Throughput  : 70.26%
+Latency:
+	Avg Pause GC Time 	60.0 ms
+	Max Pause GC Time 	70.0 ms
+	
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+50 - 60	             1	     8.33%
+60 - 70	             8	     66.67%
+70 - 80	             3	     25.0%
+
+just have Minor GC, do not the Full GC
+Minor GC stats
+	Minor GC count	    12
+	Minor GC reclaimed 	10.49 gb
+	Minor GC total time	720 ms
+	Minor GC avg time 	60.0 ms
+	Minor GC avg time std dev	4.08 ms
+	Minor GC min/max time	    50.0 ms / 70.0 ms
+	Minor GC Interval avg 	    220 ms
+
+Object Stats
+	Total created bytes 	12 gb
+	Total promoted bytes 	1.35 gb
+	Avg creation rate 	    4.96 gb/sec
+	Avg promotion rate 	    568.92 mb/sec
+
+Total created bytes  Total reclaimed bytes  Throughput Full/Minor GC count  Avg/Mid Rank Pause GC Time  Max Pause GC 
+12 gb	10.49 gb	70.26%	0/12	60.0 ms/70.0 ms 720 ms
+-------------------------------------------------------------------------------------------------------------------------------------
+
+# memory size: 6g
+$ java -Dfile.encoding=UTF-8 -Xms6g -Xmx6g -Xloggc:gc.demo_6g.log -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:49562
+
+Generation	        Allocated 	Peak 
+Young Generation	1.75 gb	    1.75 gb
+Old Generation	    4 gb	    576.56 mb
+Total	            6 gb	    2.31 gb
+
+Throughput  : 74.079%
+Latency:
+	Avg Pause GC Time 	71.0 ms
+	Max Pause GC Time 	80.0 ms
+	
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+60 - 70	            1	     12.5%
+70 - 80	            5	     62.5%
+80 - 90	            2	     25.0%
+
+just have Minor GC, do not the Full GC
+Minor GC stats
+	Minor GC count	8
+	Minor GC reclaimed 	11.1 gb
+	Minor GC total time	570 ms
+	Minor GC avg time 	71.3 ms
+	Minor GC avg time std dev	5.99 ms
+	Minor GC min/max time	60.0 ms / 80.0 ms
+	Minor GC Interval avg 	314 ms
+
+Object Stats
+	otal created bytes 	    12 gb
+	Total promoted bytes 	1.35 gb
+	Avg creation rate 	    4.96 gb/sec
+	Avg promotion rate 	    568.92 mb/sec
+
+Total created bytes  Total reclaimed bytes  Throughput Full/Minor GC count  Avg/Mid Rank Pause GC Time  Max Pause GC 
+	12 gb	11.1 gb	74.079%	0/8	71.0 ms/80.0 ms	570 ms
+-----------------------------------------------------------------------------------
+
+# memory size: 8g
+
+$ java -Dfile.encoding=UTF-8 -Xms8g -Xmx8g -Xloggc:gc.demo_8g.log -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:52297
+
+通过GCeasy分析GC Log 结果如下：
+
+Generation	         Allocated 	Peak 
+Young Generation	 2.33 gb	2.33 gb
+Old Generation	     5.33 gb	82.37 mb
+Total	             8 gb	     2.41 gb
+
+Throughput  : 77.26%
+Latency:
+	Avg Pause GC Time 	73.0 ms
+	Max Pause GC Time 	80.0 ms
+
+just have Minor GC, do not the Full GC
+Minor GC stats
+	Minor GC count	    6
+	Minor GC reclaimed 	11.58 gb
+	Minor GC total time	440 ms
+	Minor GC avg time 	73.0 ms
+	Minor GC avg time std dev	4.71 ms
+	Minor GC min/max time	    70.0 ms / 80.0 ms
+	Minor GC Interval avg 	    386 ms
+
+Object Stats
+	otal created bytes 	    12 gb
+	Total promoted bytes 	89.54 mb
+	Avg creation rate 	    6.21 gb/sec
+	Avg promotion rate 	    46.92 mb/sec
+	
+Total created bytes  Total reclaimed bytes  Throughput Full/Minor GC count  Avg/Mid Rank Pause GC Time  Max Pause GC 
+12 gb	11.58 gb	77.26%	0/6 	73.0 ms/80.0 ms	440 ms
+---------------------------------------------------------------------------------------------
+# memory size: 12g
+$ java -Dfile.encoding=UTF-8 -Xms12g -Xmx12g -Xloggc:gc.demo.log -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:48232
+
+通过GCeasy分析GC Log 结果如下：
+
+Generation	       Allocated 	Peak 
+Young Generation	3.5 gb	    3.37 gb
+Old Generation	    8 gb	    24 kb
+Total	            12 gb	    3.37 gb
+
+Throughput  : 81.166%
+Latency:
+	Avg Pause GC Time 	77.5 ms
+	Max Pause GC Time 	80.0 ms
+	
+just have Minor GC, do not the Full GC
+Minor GC count	    4
+	Minor GC reclaimed 	11.64 gb
+	Minor GC total time	310 ms
+	Minor GC avg time 	77.5 ms
+	Minor GC avg time std dev	4.33 ms
+	Minor GC min/max time	    70.0 ms / 80.0 ms
+	Minor GC Interval avg 	    548 ms
+
+Object Stats
+	Total created bytes 	12 gb
+	Total promoted bytes 	24 kb
+	Avg creation rate 	7.29 gb/sec
+	Avg promotion rate 	14 kb/sec
+	
+Total created bytes  Total reclaimed bytes  Throughput Full/Minor GC count  Avg/Mid Rank Pause GC Time  Max Pause GC 
+12 gb	11.64 gb 	81.166% 	4	77.5 ms/80.0 ms  310 ms
+-----------------------------------------------------------------------------------------------
+
+# memory size: 4g
+
+	串行化GC
+
+		$ java -Dfile.encoding=UTF-8 -Xms4g -Xmx4g -Xloggc:gc.demo_4g_serial.log -XX：+UseSerialGC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+		正在执行...
+		执行结束!共生成对象次数:42785
+		
+		Generation	    	Allocated 		Peak 
+		Young Generation	1.2 gb			1.2 gb
+		Old Generation		2.67 gb			1.25 gb
+		Total				4 gb			2.45 gb
+		
+		Throughput  : 60.347%
+		Latency:
+			Avg Pause GC Time 	96.0 ms
+			Max Pause GC Time 	120 ms
+		
+		GC Pause Duration Time Range :
+		Duration (ms)  No. of GCs	Percentage
+		0 - 100			9		90.0%
+		100 - 200			1		10.0%
+		
+		just have Minor GC, do not the Full GC
+		Minor GC stats
+			Minor GC count	10
+			Minor GC reclaimed 	9.13 gb
+			Minor GC total time	960 ms
+			Minor GC avg time 	96.0 ms
+			Minor GC avg time std dev	9.17 ms
+			Minor GC min/max time	90.0 ms / 120 ms
+			Minor GC Interval avg 	269 ms
+		
+		Object Stats
+			Total created bytes 	10.67 gb
+			Total promoted bytes 	1.4 gb
+			Avg creation rate 	    4.41 gb/sec
+			Avg promotion rate 		593.62 mb/sec
+
+	------------------------
+	CMS GC （默认yong内存大小）
+		java -Dfile.encoding=UTF-8 -Xms4g -Xmx4g -Xloggc:gc.demo_4g_cms.log -XX：+UseConcMarkSweepGC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+		正在执行...
+		执行结束!共生成对象次数:40364
+		
+		Generation			Allocated 	Peak 
+		Young Generation	665.6 mb	599.06 mb   
+		Old Generation		3.35 gb		1.74 gb
+		Total				4 gb		2.2 gb
+		
+		Young Generation default size = 64M * 并行GC线程数(8) * 13 / 10 =665.6M
+		
+		
+		Throughput: 56.7%
+		Latency:
+			Avg Pause GC Time 	58.0 ms
+			Max Pause GC Time 	80.0 ms
+			
+		GC Pause Duration Time Range :
+		Duration (ms)  No. of GCs	Percentage
+		0 - 10				2			10.0%
+		30 - 40				4			20.0%
+		50 - 60				1			5.0%
+		70 - 80				9			45.0%
+		80 - 90				4			20.0%
+		
+		CMS Collection Phases Statistics
+		Young GC 		Concurrent 		Abortable 	PrecleanConcurrentMark	ConcurrentReset	ConcurrentSweep	InitialMark 	FinalRemark 	ConcurrentPreclean
+		Total Time 		1 sec 160 ms	110 ms		10.0 ms					10.0 ms					0			0				0				0
+		Avg Time 		64.4 ms			110 ms		10.0 ms					10.0 ms					0			0				0				0
+		Std Dev Time	14.6 ms			0			0						0						0			0				0				0
+		Min Time 		40.0 ms			110 ms		10.0 ms					10.0 ms					0			0				0				0
+		Max Time 		80.0 ms			110 ms		10.0 ms					10.0 ms					0			0				0				0
+		Interval Time 	157 ms			n/a			n/a						n/a						n/a			n/a				n/a				n/a
+		Count 			18				1			1						1						1			1				1				1
+		
+		Pause Time 
+			Total Time	1 sec 160 ms
+			Avg Time	58.0 ms
+			Std Dev Time	23.8 ms
+			Min Time	0
+			Max Time	80.0 ms
+		
+		Concurrent Time 
+			Total Time	130 ms
+			Avg Time	26.0 ms
+			Std Dev Time	42.2 ms
+			Min Time	0
+			Max Time	110 ms
+		
+		Object Stats
+			Total created bytes 	8.96 gb
+			Total promoted bytes 	2.08 gb
+			Avg creation rate 	3.34 gb/sec
+			Avg promotion rate 	795.97 mb/sec
+			
+-------------
+CMS GC （设置newRatio=2）
+java -Dfile.encoding=UTF-8  -Xms4g -Xmx4g -Xloggc:gc.demo_4g_cms_newRa2.log -XX:NewRatio=2 -XX：+UseConcMarkSweepGC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:41584
+
+Generation	Allocated 	Peak 
+Young Generation	1.33 gb	1.2 gb
+Old Generation	2.67 gb	1.12 gb
+Total	4 gb	2.32 gb
+
+Throughput  : 60.699%
+Latency:
+Avg Pause GC Time 	100 ms
+Max Pause GC Time 	120 ms
+
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+0 - 100				4		44.44%
+100 - 200			5		55.56%
+
+just have Minor GC, do not the Full GC
+Minor GC stats
+	Minor GC count	9
+	Minor GC reclaimed 	8.2 gb
+	Minor GC total time	900 ms
+	Minor GC avg time 	100 ms
+	Minor GC avg time std dev	17.6 ms
+	Minor GC min/max time	60.0 ms / 120 ms
+	Minor GC Interval avg 	286 ms
+
+Object Stats
+	Total created bytes 	9.6 gb
+	Total promoted bytes 	1.27 gb
+	Avg creation rate 		4.19 gb/sec
+	Avg promotion rate 		568.32 mb/sec
+---------------------------------------
+
+G1 GC
+java -Dfile.encoding=UTF-8 -Xms4g -Xmx4g -Xloggc:gc.demo_4g_g1.log -XX：+UseG1GC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:40139
+Generation	       Allocated 	Peak 
+Young Generation	1.6 gb		1.58 gb
+Old Generation	    3.8 gb		1.65 gb
+Total	            4 gb		3.23 gb
+
+Throughput  : 71.639%
+Latency:
+	Avg Pause GC Time 	40.5 ms
+	Max Pause GC Time 	80.0 ms
+	
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+10 - 20				8			42.11%
+20 - 30				3			15.79%
+50 - 60				3			15.79%
+60 - 70				1			5.26%
+70 - 80				1			5.26%
+80 - 90				3			15.79%
+
+just have Minor GC, do not the Full GC
+Other GC stats
+	Other GC count	19
+	Other GC reclaimed 	7.79 gb
+	Other GC total time	770 ms
+	Other GC avg time 	40.5 ms
+	Other GC avg time std dev	22.8 ms
+	Other GC min/max time	20.0 ms / 80.0 ms
+	Other GC Interval avg 	150 ms
+	
+Object Stats
+	Total created bytes 	9.77 gb
+	Total promoted bytes 	1.78 gb
+	Avg creation rate 	3.6 gb/sec
+	Avg promotion rate 	671.2 mb/sec
+-------------------------------------------------------------------------------------------------------
+
+实验二：通过设置固定内存大小2G，比较在不同GC收集器下，不同GC收集器的性能表现,GCLogAnalysis 运行时间改为10s 
+
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_serial.log -XX：+UseSerialGC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_parallel_t8.log -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+
+
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_parallel_thds4.log -XX:-UseAdaptiveSizePolicy -XX:ParallelGCThreads=4 -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_cms_t4.log -XX:+UseConcMarkSweepGC -XX:-UseAdaptiveSizePolicy -XX:NewRatio=2 -XX:ParallelGCThreads=4 -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_cms_t8.log -XX:+UseConcMarkSweepGC -XX:-UseAdaptiveSizePolicy -XX:NewRatio=2 -XX:ParallelGCThreads=8 -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_g1_t8.log -XX:+UseG1GC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:ParallelGCThreads=8 -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+
+GC收集器           生成对象次数  TotalCreatedBytes  TotalReclaimedBytes  Throughput Full/MinorGCCount  AvgPauseGCTime/MaxPauseGCTime   GCTotal PauseTime/ConcTime
+Serial GC         131296       33.07 gb                 32.51 gb           66.718%       7/55              52.3 ms/90.0 ms           3240 ms
+Parallel GC(T=8)  129138       32.53 gb                 31.26 gb           64.607%       6/65              48.7 / 100 ms             3460 ms
+Parallel GC(t=4)  133696       33.53 gb                 33.03 gb           66.77%        7/67              43.6 /100 ms              3230 ms
+CMS GC (t=4)	  139796       24.09 gb	                        	       73.45%	     13/55	           32 ms/90.0 ms             2590/1780 ms 
+CMS GC (t=8)      158909       28.75 gb                                    71.787%       12/63             31 ms/ 80 ms              2740/1200 ms
+G1 GC  (t=4)	  119308       31.76 gb                                    72.394%       19/55             18 ms/60 ms               2720/151 ms
+G1 GC  (t=8)      119939       32.14 gb                                    73.163%       17/68             17.2 ms/70.0 ms           2670/84.4 ms
+
+
+# memory size 2g
+
+串行化GC
+
+$ java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_serial.log -XX：+UseSerialGC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:131296
+
+Generation	    			Allocated 	Peak 
+Young Generation			614.38 mb	614.38 mb
+Old Generation				1.33 gb		1.27 gb
+Meta Space					1.01 gb		2.54 mb
+Young + Old + Meta space	3.01 gb		1.87 gb
+	
+Throughput  : 52.522%
+Latency:
+    Avg Pause GC Time 	64.0 ms
+    Max Pause GC Time 	90 ms
+
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+20 - 30				1			5.0%
+30 - 40				2			10.0%
+50 - 60				4			20.0%
+70 - 80				10			50.0%
+90 - 100			3			15.0%
+
+Total GC stats
+	Total GC count 	20
+	Total reclaimed bytes 	10.25 gb
+	Total GC time 	1 sec 280 ms
+	Avg GC time 	64.0 ms
+	GC avg time std dev	16.6 ms
+	GC min/max time	30.0 ms / 90.0 ms
+	GC Interval avg time 	141 ms
+
+  Minor GC stats
+	Minor GC count	18
+	Minor GC reclaimed 	7.37 gb
+	Minor GC total time	1 sec 100 ms
+	Minor GC avg time 	61.1 ms
+	Minor GC avg time std dev	14.9 ms
+	Minor GC min/max time	30.0 ms / 90.0 ms
+	Minor GC Interval avg 	151 ms
+  Full GC stats
+	Full GC Count	2
+	Full GC reclaimed 	2.88 gb
+	Full GC total time	180 ms
+	Full GC avg time 	90.0 ms
+	Full GC avg time std dev	0
+	Full GC min/max time	90.0 ms / 90.0 ms
+	Full GC Interval avg 	1 sec 12 ms
+
+Object Stats
+	Total created bytes 	10.67 gb
+	Total promoted bytes 	2.09 gb
+	Avg creation rate 	3.96 gb/sec
+	Avg promotion rate 	795.61 mb/sec
+------------------------
+CMS GC
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_cms.log -XX：+UseConcMarkSweepGC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:37092
+
+Generation	Allocated 	Peak 
+Young Generation	665.6 mb	599.06 mb
+Old Generation	1.35 gb	997.12 mb
+Total	2 gb	1.47 gb
+
+1 Throughput  : 65.812%
+
+2 Latency:
+
+Avg Pause GC Time 	48.0 ms
+Max Pause GC Time 	90.0 ms
+
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+---------------------------------------
+0 - 10	4	20.0%
+30 - 40	1	5.0%
+50 - 60	8	40.0%
+60 - 70	2	10.0%
+70 - 80	1	5.0%
+80 - 90	3	15.0%
+90 - 100	1	5.0%
+
+Young GC 	Concurrent Abortable Preclean	Concurrent Mark	Concurrent Reset	Concurrent Sweep	Initial Mark 	Final Remark 	Concurrent Preclean
+Total Time 	960 ms	200 ms	10.0 ms	10.0 ms	0	0	0	0
+Avg Time 	60.0 ms	100 ms	5.00 ms	5.00 ms	0	0	0	0
+Std Dev Time	14.6 ms	0	5.00 ms	5.00 ms	0	0	0	0
+Min Time 	40.0 ms	100 ms	0	0	0	0	0	0
+Max Time 	90.0 ms	100 ms	10.0 ms	10.0 ms	0	0	0	0
+Interval Time 	183 ms	964 ms	965 ms	958 ms	963 ms	967 ms	961 ms	965 ms
+Count 	16	2	2	2	2	2	2	2
+
+Pause Time 
+Total Time	960 ms
+Avg Time	48.0 ms
+Std Dev Time	27.3 ms
+Min Time	0
+Max Time	90.0 ms
+
+
+Concurrent Time 
+Total Time	220 ms
+Avg Time	22.0 ms
+Std Dev Time	39.2 ms
+Min Time	0
+Max Time	100 ms
+
+Object Stats
+(These are perfect micro-metrics to include in your performance reports)
+
+Total created bytes 	7.65 gb
+Total promoted bytes 	1.85 gb
+Avg creation rate 	2.73 gb/sec
+Avg promotion rate 	673.44 mb/sec
+--------------------------------------------------------------------------------------------
+
+G1 GC
+java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_g1.log -XX：+UseG1GC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
+正在执行...
+执行结束!共生成对象次数:36857
+
+Generation	Allocated 	Peak 
+Young Generation	969 mb	954 mb
+Old Generation	1.9 gb	1 gb
+Total	2 gb	1.68 gb
+
+1 Throughput  : 74.558%
+
+2 Latency:
+
+Avg Pause GC Time 	17.6 ms
+Max Pause GC Time 	50.0 ms
+
+GC Pause Duration Time Range :
+Duration (ms)  No. of GCs	Percentage
+0 - 10	18	43.9%
+10 - 20	13	31.71%
+20 - 30	4	9.76%
+30 - 40	5	12.2%
+50 - 60	1	2.44%
+
+Young GC 	Mixed 	initial-mark 	Concurrent Mark	Remark 	Cleanup 	Total
+Count 	22	7	4	4	4	4	45
+Total GC Time 	460 ms	150 ms	110 ms	12.0 ms	0	0	732 ms
+Avg GC Time 	20.9 ms	21.4 ms	27.5 ms	3.01 ms	0	0	16.3 ms
+Avg Time std dev	10.8 ms	6.39 ms	19.2 ms	0.367 ms	0	0	13.6 ms
+Min/Max Time 	0 / 40.0 ms	0 / 30.0 ms	0 / 50.0 ms	0 / 3.47 ms	0 / 0	0 / 0	0 / 50.0 ms
+Avg Interval Time 	128 ms	256 ms	470 ms	464 ms	464 ms	464 ms	252 ms
+
+Pause Time 
+Total Time	720 ms
+Avg Time	17.6 ms
+Std Dev Time	13.6 ms
+Min Time	0
+Max Time	50.0 ms
+
+
+Concurrent Time 
+Total Time	12.0 ms
+Avg Time	3.01 ms
+Std Dev Time	0.367 ms
+Min Time	2.64 ms
+Max Time	3.47 ms
+ Object Stats
+(These are perfect micro-metrics to include in your performance reports)
+
+Total created bytes 	9.28 gb
+Total promoted bytes 	331.6 mb
+Avg creation rate 	3.28 gb/sec
+Avg promotion rate 	117.17 mb/sec
