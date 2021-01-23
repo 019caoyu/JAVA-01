@@ -1,13 +1,13 @@
 测试前提：
     实验环境/参数：
-	    Windows 10, 64 bit, 8 core, 16G
+	   	 Windows 10, 64 bit, 8 core, 16G
 		Java version： Java 8
 		GCLogAnalysis 执行3s, 
-	辅助分析工具：
+    辅助分析工具：
 		GC LOG 分析工具：GCeasy
 总结：
     相关显示的解释：
-    Young Generation = eden + from < MaxNewSize = eden + from + to
+    	Young Generation = eden + from < MaxNewSize = eden + from + to
 	ParallelGCThreads参数的估算，
 		如果CPU小于8，则ParallelGCThreads=N(CPU 核数), 
 		如果CPU大于8，每超过5/8个CPU启动一个新的线程，ParallelGCThreads=N*(5/8)+3 向下取整。
@@ -26,12 +26,12 @@
 实验一：通过设置固定GC收集器Parallel GC，比较在同一种GC收集器下，内存从大到小情况下GC收集器的性能表现
 
 mSize  生成对象次数  创建总字节大小  总回收字节大小  GC吞吐量  F/Y GC数量   平均GC停顿时间（Y-F）/总GC停顿时间   GCTotalTime
-1g     36814       9.25 gb     8.67 gb    48.781%   7/37       24.1 ms-82.9 ms/90.0 ms     890+580=1470 ms
-2g 	   45790       11.01 gb    10.52 gb   60.806%   2/22       39.1 ms-95.0 ms/100.0 ms    860+190=1050 ms
-4g 	   49874       12 gb	   10.49 gb	  70.26%	0/12	   60.0 ms/70.0 ms             720 ms 
-6g 	   49562       12 gb	   11.1 gb	  74.079%	0/8	       71.0 ms/80.0 ms	           570 ms
-8g 	   52297	   12 gb	   11.58 gb	  77.26%	0/6 	   73.0 ms/80.0 ms	           440 ms
-12g    48232	   12 gb	   11.64 gb   81.166% 	0/4	       77.5 ms/80.0 ms             310 ms
+1g     36814       9.25 gb         8.67 gb        48.781%   7/37       24.1 ms-82.9 ms/90.0 ms             890+580=1470 ms
+2g     45790       11.01 gb        10.52 gb       60.806%   2/22       39.1 ms-95.0 ms/100.0 ms            860+190=1050 ms
+4g     49874       12 gb	   10.49 gb	  70.26%    0/12        60.0 ms/70.0 ms                    720 ms 
+6g     49562       12 gb	   11.1 gb	  74.079%   0/8	        71.0 ms/80.0 ms	                   570 ms
+8g     52297	   12 gb	   11.58 gb	  77.26%    0/6 	73.0 ms/80.0 ms	                   440 ms
+12g    48232	   12 gb	   11.64 gb       81.166%   0/4	        77.5 ms/80.0 ms                    310 ms
 
 总结：
 随着内存的不断增加收集器的吞吐能力不断增加，但是创建总字节大小很快饱和，大于2g后，收集器的创建总字节大小相等，说明收集器的内存资源没有被完全释放，
@@ -61,14 +61,14 @@ java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_cms_t8.log -XX:+UseC
 java -Dfile.encoding=UTF-8 -Xms2g -Xmx2g -Xloggc:gc.demo_2g_g1_t8.log -XX:+UseG1GC -XX:-UseAdaptiveSizePolicy -XX:+PrintGCDetails -XX:ParallelGCThreads=8 -XX:+PrintGCDateStamps  com.test.constant.GCLogAnalysis
 
 
-GC收集器           生成对象次数  创建总字节大小 总回收字节大小 GC吞吐量  F/Y GCCount  平均GC停顿时间/总GC停顿时间   总的GC 停顿时间/并发时间
-Serial GC         131296     33.07 gb   32.51 gb   66.718%    7/55          52.3 ms/90.0 ms           3240 ms
-Parallel GC(t=8)  129138     32.53 gb   31.26 gb   64.607%    6/65          48.7 / 100 ms             3460 ms
-Parallel GC(t=4)  133696     33.53 gb   33.03 gb   66.77%     7/67          43.6 /100 ms              3230 ms
-CMS GC (t=4)	  139796     24.09 gb	           73.45%	  13/55	        32 ms/90.0 ms          2590/1780 ms 
-CMS GC (t=8)      158909     28.75 gb              71.787%    12/63         31 ms/ 80 ms           2740/1200 ms
-G1 GC  (t=4)	  119308     31.76 gb              72.394%    19/55         18 ms/60 ms            2720/151 ms
-G1 GC  (t=8)      119939     32.14 gb              73.163%    17/68         17.2 ms/70.0 ms        2670/84.4 ms
+GC收集器           生成对象次数  创建总字节大小  总回收字节大小 GC吞吐量  F/Y GCCount  平均GC停顿时间/总GC停顿时间   总的GC 停顿时间/并发时间
+Serial GC         131296         33.07 gb        32.51 gb   66.718%    7/55          52.3 ms/90.0 ms           3240 ms
+Parallel GC(t=8)  129138         32.53 gb        31.26 gb   64.607%    6/65          48.7 / 100 ms             3460 ms
+Parallel GC(t=4)  133696         33.53 gb        33.03 gb   66.77%     7/67          43.6 /100 ms              3230 ms
+CMS GC (t=4)	  139796         24.09 gb	            73.45%     13/55	     32 ms/90.0 ms             2590/1780 ms 
+CMS GC (t=8)      158909         28.75 gb                   71.787%    12/63         31 ms/ 80 ms              2740/1200 ms
+G1 GC  (t=4)	  119308         31.76 gb                   72.394%    19/55         18 ms/60 ms               2720/151 ms
+G1 GC  (t=8)      119939         32.14 gb                   73.163%    17/68         17.2 ms/70.0 ms           2670/84.4 ms
 
 相同内存大小2g,固定OldSize：NewSize=2：1情况下，不同垃圾回收器选择总结：
 
