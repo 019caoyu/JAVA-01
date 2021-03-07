@@ -11,31 +11,31 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 @Configuration
-@ComponentScan("com.java.enhance.homework.week7.sql.sourcecswitch")
+@ComponentScan(basePackages = "com.java.enhance.homework.week7.sql.sourcecswitch")
 public class DBSourceConfigration {
 
     @Bean
     public Connection masterConnection() throws ClassNotFoundException, SQLException {
         Class.forName("com.mysql.jdbc.Driver");
-        Driver driver = DriverManager.getDriver("jdbc:mysql://127.0.0.1:3306/db2?characterEncoding=utf8&serverTimezone=Asia/Shanghai");
+        Driver driver = DriverManager.getDriver("jdbc:mysql://127.0.0.1:3306/db2?characterEncoding=utf8");
         Properties connectProperties = new Properties();
         connectProperties.setProperty("user","root");
         connectProperties.setProperty("password","root");
-        Connection writeC= driver.connect("jdbc:mysql://127.0.0.1:3306/db2?characterEncoding=utf8&serverTimezone=Asia/Shanghai", connectProperties);
+        Connection writeC= driver.connect("jdbc:mysql://127.0.0.1:3306/db2?characterEncoding=utf8", connectProperties);
         return writeC;
     };
 
 
-   /* @Bean
+    @Bean
     public Connection slaveConnection() throws ClassNotFoundException, SQLException {
         Class.forName("com.mysql.jdbc.Driver");
-        Driver driver = DriverManager.getDriver("jdbc:mysql://127.0.0.1:3308/db2?characterEncoding=utf8&serverTimezone=Asia/Shanghai");
+        Driver driver = DriverManager.getDriver("jdbc:mysql://127.0.0.1:3308/db2?characterEncoding=utf8");
         Properties connectProperties = new Properties();
         connectProperties.setProperty("user","root");
         connectProperties.setProperty("password","root");
-        Connection readC =  driver.connect("jdbc:mysql://127.0.0.1:3308/db2?characterEncoding=utf8&serverTimezone=Asia/Shanghai", connectProperties);
+        Connection readC =  driver.connect("jdbc:mysql://127.0.0.1:3308/db2?characterEncoding=utf8", connectProperties);
         return readC;
-    };*/
+    };
 
 
 

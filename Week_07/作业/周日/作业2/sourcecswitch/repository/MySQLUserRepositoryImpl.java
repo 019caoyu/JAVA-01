@@ -16,7 +16,7 @@ public class MySQLUserRepositoryImpl implements UserRepository {
             "INSERT INTO u_user(user_name, user_age) VALUES (?, ?)";
 
     private static final String QUERY_USER_BY_NAME_SQL =
-            "SELECT id, user_name, user_age from u_user where name = ? ";
+            "SELECT id, user_name, user_age from u_user where user_name = ? ";
 
     @Autowired
     private Connection slaveConnection;
